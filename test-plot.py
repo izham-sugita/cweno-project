@@ -64,11 +64,13 @@ y2 = np.sin(x1)
 y3 = np.sin(x1)
 y4 = np.sin(x1)
 
+'''
 for i in range(N):
     y1[i] = 0.0
+    y4[i] = 0.0
     if(x1[i] > 0.5*pi and x1[i] < pi):
         y1[i] = 1.0
-        
+'''        
 
 f = open("init.csv", "w")
 f.write("x, y\n")
@@ -87,19 +89,17 @@ plt.ylabel('y')
 plt.show()
 '''
 
+'''
 y2 = y1
 y3 = y1
 y4 = y1
-        
+'''
+
 imax = len(y1)
 dx = x1[1]-x1[0]
 
 print(dx)
 print(len(y1))
-
-for i in range(2,imax-3):
-    x2[i] = x1[i] + 0.5*dx
-
 
 for i in range(2,imax-3):
     y3[i] = 0.5*(y1[i+1] + y1[i])
@@ -112,23 +112,29 @@ for i in range(2,imax-3):
 
 for i in range(3, imax-4):
     '''
+    #for mid-point derivative reconstruction
     stencil[0] = (y1[i-1] - y1[i-2])/dx
     stencil[1] = (y1[i] - y1[i-1])/dx
     stencil[2] = (y1[i+1] - y1[i])/dx
     stencil[3] = (y1[i+2] - y1[i+1])/dx
-    stencil[4] = (y1[i+3] - y1[i+2])/dx
-    '''
+    stencil[4] = (y1[i+3] - y1[i+2])/dx 
+    '''  
+
+    #for mid-point value reconstruction
     stencil[0] = y1[i-2]
     stencil[1] = y1[i-1]
     stencil[2] = y1[i]
     stencil[3] = y1[i+1]
     stencil[4] = y1[i+2]
+    
 
     #interpolation
     y4[i] = cweno4(stencil)
+    x2[i] = x1[i] + 0.5*dx
 
-    #error = abs( y4[i]-np.sin(x2[i]) )
-    #print(error)
+    #error = abs(y4[i] - np.cos(x2[i]))
+    error = abs( y4[i]-np.sin(x2[i]) )
+    print(error)
 
 
 '''    
@@ -153,12 +159,12 @@ blue_line = mlines.Line2D([], [], color='blue', marker='o',
 plt.legend(handles=[blue_line])
 '''
 
-
-#plt.plot(x1, y1, 'ko') #analytical 
+'''
+plt.plot(x1, y1, 'ko-') #analytical 
 plt.plot(x2, y4, 'ro') #4th order central WENO interpolation
 #plt.plot(x2, y2, 'b^') #4th order CD interpolation
 #plt.plot(x2, y3, '^') #average [i,i+1]
 plt.title('Interpolation sample')
 plt.ylabel('y')
 plt.show()
-
+'''
