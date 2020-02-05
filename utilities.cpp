@@ -40,6 +40,11 @@ template<typename T>int sign(T val){
   return (T(0) < val) - (val < T(0));
 }
 
+/*float sign*/
+float sign_f(float val){
+ return ( 0.0 < val) - (val < 0.0);
+}
+
 /*Runge-Kutta step function*/
 float rkstep(float u, float dt,
 	     float alpha, float source)
@@ -110,7 +115,7 @@ void init_calc(int &imax, float &length,
   for(i=0; i<imax; ++i){
     xg[i] = i*dx;
     u[i] = 0.0;
-    if(xg[i] >=0.2*length && xg[i]<=0.3*length){
+    if(xg[i] >=0.4*length && xg[i]<=0.6*length){
       u[i] = 1.0;
     }
   }
