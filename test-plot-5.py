@@ -93,6 +93,8 @@ y2 = np.sin(x1)
 y3 = np.sin(x1)
 y4 = np.sin(x1)
 
+dy4dx = np.cos(x1)
+
 f = open("init.csv", "w")
 f.write("x, y\n")
 for i in range(N):
@@ -119,54 +121,79 @@ print(len(y1))
 
 
 for i in range(3,imax-4):
-    y3[i] = 0.5*(y1[i+1] - y1[i-1])/dx
-    y2[i] = (y1[i-2] - 8.0*y1[i-1]
-             + 8.0*y1[i+1] -y1[i+2])/(12.0*dx) #central interpolation
-
-    '''
-    stencil[0] = (y1[i-1] - y1[i-2])/dx
-    stencil[1] = (y1[i] - y1[i-1])/dx
-    stencil[2] = (y1[i+1] - y1[i])/dx
-    stencil[3] = (y1[i+2] - y1[i+1])/dx
-    stencil[4] = (y1[i+3] - y1[i+2])/dx
-'''
-
-    stencil[0] = y1[i-2]/dx
-    stencil[1] = y1[i-1]/dx
-    stencil[2] = y1[i]/dx
-    stencil[3] = y1[i+1]/dx
-    stencil[4] = y1[i+2]/dx 
-
-    y4[i] = cweno4_my(stencil)
-    x2[i] = x1[i]-0.5*dx
+    y2[i] = 0.5*(y1[i+1] + y1[i])
     
-    err1 = abs( y3[i] -np.cos(x1[i]) )
-    err2 = abs( y2[i] -np.cos(x1[i]) )
-    err3 = abs( y4[i] -np.cos(x2[i]) )
+    #interpolation x_(i+1/2)
+    stencil[0] = y1[i-2]
+    stencil[1] = y1[i-1]
+    stencil[2] = y1[i]  #interpolation for point [i,i+1]
+    stencil[3] = y1[i+1]
+    stencil[4] = y1[i+2]
+
+    yplushalf = cweno4(stencil)
+    
+    y4[i] = yplushalf
+    x2[i] = x1[i] + 0.5*dx
+
+    
+    #err1 = abs( y3[i] -np.cos(x1[i]) )
+    #err2 = abs( y2[i] -np.cos(x1[i]) )
+    #err3 = abs( y4[i] -np.cos(x2[i]) )
 
 
-
-f =open("derivatives.csv","w")
-f.write("x, 4thCWENO, 4thCD, analytic\n")
+sum = 0.0
 for i in range(3, imax-4):
-    str0 = str(x1[i])
+#stencil for reconstruction
+
+    #stencil[0] = y4[i-2]/dx
+    #stencil[1] = y4[i-1]/dx
+    #stencil[2] = y4[i]/dx
+    #stencil[3] = y4[i+1]/dx
+    #stencil[4] = y4[i+2]/dx
+
+    #dy4dx[i] = cweno4_my(stencil)
+    #err = (np.cos(x2[i]) - dy4dx[i])**2
+
+    stencil[0] = (y4[i-2]-y4[i-3]) /dx
+    stencil[1] = (y4[i-1]-y4[i-2]) /dx
+    stencil[2] = (y4[i]-y4[i-1]) /dx #reconstruction [i-1,i,i+1] from the interpolation point
+    stencil[3] = (y4[i+1] - y4[i]) /dx
+    stencil[4] = (y4[i+2] - y4[i+1])/dx
+
+    dy4dx[i] = cweno4(stencil)
+
+
+f = open("derivatives.csv","w")
+f.write("x, dy4dx, analytic\n")
+for i in range(3, imax-4):
+    str0 = str(x2[i])
+    str1 = str(dy4dx[i])
+    str2 = str(np.cos(x2[i]))
+    strall = str0+","+str1+","+str2+"\n"
+    f.write(strall)
+
+f.close()
+
+plt.plot(x2, y4, 'ko-') #analytical 
+plt.plot(x2, dy4dx, 'r^') #4th order central WENO interpolation
+plt.title('Interpolation sample')
+plt.ylabel('y')
+plt.show()
+
+
+f =open("interpolation.csv","w")
+f.write("x, 4thCWENO, 2ndCD, analytic\n")
+for i in range(3, imax-4):
+    str0 = str(x2[i])
     str1 = str(y4[i])
     str2 = str(y2[i])
-    str3 = str(np.cos(x1[i]))
+    str3 = str(np.sin(x2[i]))
     strall = str0+","+str1+","+str2+","+str3+"\n"
     f.write(strall)
     #print(y4[i] - np.cos(x2[i]))
 
 f.close()
 
-
-plt.plot(x1, np.cos(x1), 'ko-') #analytical
-plt.plot(x1, y3, 'o') #2nd CD
-plt.plot(x1, y2, 'r^') #4th CD
-plt.plot(x1, y4, 'y^') #4th CD 
-plt.title('Function initial condition')
-plt.ylabel('y')
-plt.show()
     
 '''
 import matplotlib.lines as mlines

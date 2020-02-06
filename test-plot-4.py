@@ -123,21 +123,25 @@ for i in range(3,imax-4):
     y2[i] = (y1[i-2] - 8.0*y1[i-1]
              + 8.0*y1[i+1] -y1[i+2])/(12.0*dx) #central interpolation
 
-    '''
-    stencil[0] = (y1[i-1] - y1[i-2])/dx
-    stencil[1] = (y1[i] - y1[i-1])/dx
-    stencil[2] = (y1[i+1] - y1[i])/dx
-    stencil[3] = (y1[i+2] - y1[i+1])/dx
-    stencil[4] = (y1[i+3] - y1[i+2])/dx
-'''
+    #interpolation x_(i-1/2)
+    stencil[0] = y1[i-3]
+    stencil[1] = y1[i-2]
+    stencil[2] = y1[i-1]
+    stencil[3] = y1[i]
+    stencil[4] = y1[i+1] 
 
-    stencil[0] = y1[i-2]/dx
-    stencil[1] = y1[i-1]/dx
-    stencil[2] = y1[i]/dx
-    stencil[3] = y1[i+1]/dx
-    stencil[4] = y1[i+2]/dx 
+    yminushalf = cweno4(stencil)
+    
+    #interpolation x_(i+1/2)
+    stencil[0] = y1[i-2]
+    stencil[1] = y1[i-1]
+    stencil[2] = y1[i]
+    stencil[3] = y1[i+1]
+    stencil[4] = y1[i+2]
 
-    y4[i] = cweno4_my(stencil)
+    yplushalf = cweno4(stencil)
+    
+    y4[i] = (yplushalf - yminushalf)/dx  #cweno4_my(stencil)
     x2[i] = x1[i]-0.5*dx
     
     err1 = abs( y3[i] -np.cos(x1[i]) )
