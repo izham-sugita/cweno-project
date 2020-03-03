@@ -57,7 +57,9 @@ y1 = np.sin(x1)
 y2 = np.sin(x1)
 
 y3 = np.cos(x1)
+
 y4 = np.cos(x1)
+
 
 for i in range(3, N-4):
 
@@ -74,6 +76,7 @@ for i in range(3, N-4):
 err = 0.0
 count =0
 for i in range(4, N-5):
+    #using interpolated value from cweno
     stencil[0] = (y2[i-2]-y2[i-3])/dx
     stencil[1] = (y2[i-1]-y2[i-2])/dx
     stencil[2] = (y2[i]-y2[i-1])/dx
@@ -89,15 +92,33 @@ err = np.sqrt( err/count)
 print("Sample points: ", count)
 print("RMS error: ", err)
 
+err = 0.0
+count =0
+for i in range(4, N-5):
+    #using averaged value from [i,i+1] as i+(1/2) resulted a centered difference definition
+    stencil[0] = 0.5*(y1[i-1] - y1[i-3])/dx
+    stencil[1] = 0.5*(y1[i] - y1[i-2])/dx
+    stencil[2] = 0.5*(y1[i+1] - y1[i-1])/dx
+    stencil[3] = 0.5*(y1[i+2] - y1[i])/dx
+    stencil[4] = 0.5*(y1[i+3] - y1[i+1])/dx
+    y3[i] = cweno4(stencil) #at coordinate x2
+
+    err = err + (y3[i] - np.cos(x2[i]))**2
+    count +=1
+
+err = np.sqrt( err/count)
+print("Sample points: ", count)
+print("RMS error: ", err)
+
 #plt.plot(x1, y1, 'ko-', label="Analytical") #analytical
 #plt.plot(x2, y2, 'b^', label="Interpolation") #interpolation 
 
-'''
+
 plt.plot(x2, np.cos(x2), 'ko-', label="Analytical") #analytical
-plt.plot(x2, y4, 'b^', label="Interpolation") #interpolation 
+plt.plot(x2, y3, 'b^', label="Interpolation") #interpolation 
 plt.title('Function interpolation')
 plt.ylabel('y')
 plt.xlabel('x')
 plt.legend(loc='best', fontsize='xx-large')
 plt.show()
-'''
+

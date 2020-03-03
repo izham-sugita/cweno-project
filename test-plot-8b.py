@@ -94,29 +94,35 @@ for imax in meshlist:
     dx = x1[1]-x1[0]
 
     y1 = np.sin(x1)
-    y2 = np.cos(x1)
-    y3 = np.sin(x1)
+    y2 = np.sin(x1)
+    y3 = np.cos(x1)
     y4 = np.cos(x1)
 
     for i in range(3, imax-4):
-
-        #stencil[0] = y1[i-1]
-        #stencil[1] = y1[i]
-        #stencil[2] = y1[i+1]
-        #stencil[3] = y1[i+2]
-        #y2[i] = cweno4_v2(stencil)
-        
-        #using averaged value resulted a max. second order accurate
-        stencil[0] = 0.5*(y1[i-1] - y1[i-3])/dx
-        stencil[1] = 0.5*(y1[i] - y1[i-2])/dx
-        stencil[2] = 0.5*(y1[i+1] - y1[i-1])/dx
-        stencil[3] = 0.5*(y1[i+2] - y1[i])/dx
-        stencil[4] = 0.5*(y1[i+3] - y1[i+1])/dx
+                
+        #Interpolate mid-values
+        stencil[0] = y1[i-2] 
+        stencil[1] = y1[i-1] 
+        stencil[2] = y1[i] 
+        stencil[3] = y1[i+1] 
+        stencil[4] = y1[i+2] 
         
         y2[i] = cweno4(stencil)
-        x2[i] = x1[i] + 0.5*dx
-        err = ( y2[i] - np.cos(x2[i]) )**2
+        #x2[i] = x1[i] + 0.5*dx
+        #err = ( y2[i] - np.cos(x2[i]) )**2
+        
 
+    for i in range(3, imax-4):
+        #Use interpolated mid-values to reconstruct derivatives at mid-point
+        stencil[0] = (y2[i-2] -y2[i-3])/dx
+        stencil[1] = (y2[i-1] - y2[i-2])/dx
+        stencil[2] = (y2[i] - y2[i-1])/dx 
+        stencil[3] = (y2[i+1] - y2[i])/dx 
+        stencil[4] = (y2[i+2] -y2[i+1])/dx 
+        
+        y3[i] = cweno4(stencil)
+        x2[i] = x1[i] + 0.5*dx
+        err = ( y3[i] - np.cos(x2[i]) )**2
 
     err = np.sqrt(err/(N-7 ) )
     logdx[j] = abs(np.log(dx))
