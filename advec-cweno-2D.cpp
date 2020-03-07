@@ -69,13 +69,9 @@ int main()
       yg[i][j] = j*dy;
 
       /*Rotational speed*/
-      /*
+      
       u[i][j] = -(yg[i][j] - yc)*omega;
       v[i][j] = (xg[i][j] - xc)*omega;
-      */
-
-      u[i][j] = 1.0;
-      v[i][j] = 1.0;      
       
       if( xg[i][j] >=0.2 && xg[i][j] <=0.4){
 	if(yg[i][j] >=0.2 && yg[i][j]<=0.4){
@@ -100,94 +96,310 @@ int main()
   float fin, ftemp;
 
   int istart=3;
-  int iend = imax-2;
+  int iend = imax-4;
   int jstart=3;
-  int jend = jmax-2;
+  int jend = jmax-4;
   int steps=10;
   
   float fmhalf, fphalf;
-  
+
+  float fleft, fright, fl, fr;
+  float uright, uleft;  
   do{
 
     for(i=istart; i<iend; ++i){
       for(j=jstart; j<jend; ++j){
-	//check for u-direction
-	if(u[i][j] >= 0.0){
-	  stn[0] = f[i-3][j];
-	  stn[1] = f[i-2][j];
-	  stn[2] = f[i-1][j];
-	  stn[3] = f[i][j];
-	  stn[4] = f[i+1][j];
-	  fmhalf = cweno4(stn);
-	  dfdx = 2.0*(f[i][j] - fmhalf)/dx;
 
-	}else{
+	// x-axis for dfdx
+      /* for flux at i-(1/2) */
+     stn[0] = u[i - 3][j] * f[i - 3][j];
+     stn[1] = u[i - 2][j] * f[i - 2][j];
+     stn[2] = u[i - 1][j] * f[i - 1][j];
+     stn[3] = u[i][j] * f[i][j];
+     stn[4] = u[i + 1][j]*f[i + 1][j];
+     fleft = cweno4( stn ); //flux
 
-	  stn[0] = f[i-2][j];
-	  stn[1] = f[i-1][j];
-	  stn[2] = f[i][j];
-	  stn[3] = f[i+1][j];
-	  stn[4] = f[i+2][j];
-	  fphalf = cweno4(stn);
-	  dfdx = 2.0*(fphalf - f[i][j])/dx;
+     stn[0] = f[i - 3][j];
+     stn[1] = f[i - 2][j];
+     stn[2] = f[i - 1][j];
+     stn[3] = f[i][j];
+     stn[4] = f[i + 1][j];
+     uleft = cweno4( stn ); //flux
 
-	}
+     stn[0] = u[i + 2][j] * f[i + 2][j];
+     stn[1] = u[i + 1][j] * f[i + 1][j];
+     stn[2] = u[i][j] * f[i][j];
+     stn[3] = u[i - 1][j]*f[i - 1][j];
+     stn[4] = u[i - 2][j]*f[i - 2][j];
+     fright = cweno4( stn );
 
-	//check for v-direction
-	if(v[i][j] >= 0.0){
-	  stn[0] = f[i][j-3];
-	  stn[1] = f[i][j-2];
-	  stn[2] = f[i][j-1];
-	  stn[3] = f[i][j];
-	  stn[4] = f[i][j+1];
-	  fmhalf = cweno4(stn);
-	  dfdy = 2.0*(f[i][j] - fmhalf)/dy;
+     stn[0] = f[i + 2][j];
+     stn[1] = f[i + 1][j];
+     stn[2] = f[i][j];
+     stn[3] = f[i - 1][j];
+     stn[4] = f[i - 2][j];
+     uright = cweno4( stn );
+     
+     fl = 0.5*( fleft + fright ) - 0.5* max( abs( u[i][j] ), abs( u[i-1][j] ) ) * ( uright - uleft );
 
-	}else{
+     /* for flux at i+(1/2) */
+     stn[0] = u[i - 2][j] * f[i - 2][j];
+     stn[1] = u[i - 1][j] * f[i - 1][j];
+     stn[2] = u[i][j] *  f[i][j];
+     stn[3] = u[i + 1][j] *  f[i + 1][j];
+     stn[4] = u[i + 2][j] *  f[i + 2][j];
+     fleft = cweno4( stn );
 
-	  stn[0] = f[i][j-2];
-	  stn[1] = f[i][j-1];
-	  stn[2] = f[i][j];
-	  stn[3] = f[i][j+1];
-	  stn[4] = f[i][j+2];
-	  fphalf = cweno4(stn);
-	  dfdy = 2.0*(fphalf - f[i][j])/dy;
+     stn[0] = f[i - 2][j];
+     stn[1] = f[i - 1][j];
+     stn[2] = f[i][j];
+     stn[3] = f[i + 1][j];
+     stn[4] = f[i + 2][j];
+     uleft = cweno4( stn );
 
-	}
+     stn[0] = u[i+3][j] * f[i+3][j];
+     stn[1] = u[i+2][j] * f[i+2][j];
+     stn[2] = u[i+1][j] * f[i+1][j];
+     stn[3] = u[i][j] * f[i][j];
+     stn[4] = u[i-1][j] * f[i-1][j];
+     fright = cweno4( stn );
+
+     stn[0] = f[i+3][j];
+     stn[1] = f[i+2][j];
+     stn[2] = f[i+1][j];
+     stn[3] = f[i][j];
+     stn[4] = f[i-1][j];
+     uright = cweno4( stn );
+
+     fr = 0.5*( fleft + fright ) - 0.5* max(abs( u[i][j] ), abs( u[i+1][j] )) *( uright - uleft );
+
+     dfdx = (fr - fl)/dx; 
+     /* --------------------------------------------------------------------- */
+
+      // y-axis for dfdy
+      /* for flux at j-(1/2) */
+     stn[0] = v[i][j - 3] * f[i][j - 3];
+     stn[1] = v[i][j - 2] * f[i][j - 2];
+     stn[2] = v[i][j - 1] * f[i][j - 1];
+     stn[3] = v[i][j] * f[i][j];
+     stn[4] = v[i][j+1] * f[i][j + 1];
+     fleft = cweno4( stn );
+
+     stn[0] = f[i][j - 3];
+     stn[1] = f[i][j - 2];
+     stn[2] = f[i][j - 1];
+     stn[3] = f[i][j];
+     stn[4] = f[i][j + 1];
+     uleft = cweno4( stn );
+
+     stn[0] = v[i][j + 2] * f[i][j + 2];
+     stn[1] = v[i][j + 1] * f[i][j + 1];
+     stn[2] = v[i][j] * f[i][j];
+     stn[3] = v[i][j - 1] * f[i][j - 1];
+     stn[4] = v[i][j - 2] * f[i][j - 2];
+     fright = cweno4( stn );
+
+     stn[0] = f[i][j + 2];
+     stn[1] = f[i][j + 1];
+     stn[2] = f[i][j];
+     stn[3] = f[i][j - 1];
+     stn[4] = f[i][j - 2];
+     uright = cweno4( stn );
+     
+     fl = 0.5*( fleft + fright ) - 0.5*max( abs( v[i][j] ), abs( v[i][j-1] ) )*( uright - uleft );
+
+     /* for flux at j+(1/2) */
+     stn[0] = v[i][j - 2] * f[i][j - 2];
+     stn[1] = v[i][j - 1] * f[i][j - 1];
+     stn[2] = v[i][j] * f[i][j];
+     stn[3] = v[i][j + 1] * f[i][j + 1];
+     stn[4] = v[i][j + 2] * f[i][j + 2];
+     fleft = cweno4( stn );
+
+     stn[0] = f[i][j - 2];
+     stn[1] = f[i][j - 1];
+     stn[2] = f[i][j];
+     stn[3] = f[i][j + 1];
+     stn[4] = f[i][j + 2];
+     uleft = cweno4( stn );
+
+     stn[0] = v[i][j + 3] * f[i][j + 3];
+     stn[1] = v[i][j + 2] * f[i][j + 2];
+     stn[2] = v[i][j + 1] * f[i][j + 1];
+     stn[3] = v[i][j] * f[i][j];
+     stn[4] = v[i][j - 1] * f[i][j - 1];
+     fright = cweno4( stn );
+
+     stn[0] = f[i][j + 3];
+     stn[1] = f[i][j + 2];
+     stn[2] = f[i][j + 1];
+     stn[3] = f[i][j];
+     stn[4] = f[i][j - 1];
+     uright = cweno4( stn );
+     
+     fr = 0.5*( fleft + fright ) - 0.5*max( abs( v[i][j] ), abs( v[i][j+1] ) )*( uright - uleft );
+
+     dfdy = (fr - fl)/dy; 
+     /* --------------------------------------------------------------------- */
 
 	/*Time integration*/
-	 source = -u[i][j]*dfdx - v[i][j]*dfdy; 
+	 source = - dfdx -  dfdy ; 
 	 fin = f[i][j];
-	 ftemp = rkstep(fin, dt, 1.0, source);
+	 ftemp = rkstep(fin, dt, 0.5, source);
 	 f1[i][j] = ftemp;
 	 	 
 	}
       } //end of i-j loop
 
-    /*Second block, second step RK*/
+    /* ---- 2nd-step RK-------- */
 
-           //start of i-j loop
-    /*
-    for(i=istart; i<iend; ++i){
-	for(j=jstart; j<jend; ++j){
-	
-	
-	dfdx = 0.5*(udfdx_phalf + udfdx_mhalf);
+      for(i=istart; i<iend; ++i){
+      for(j=jstart; j<jend; ++j){
 
-	
-	dfdy = 0.5*(udfdx_phalf + udfdx_mhalf);
+	// x-axis for dfdx
+      /* for flux at i-(1/2) */
+     stn[0] = u[i - 3][j] * f1[i - 3][j];
+     stn[1] = u[i - 2][j] * f1[i - 2][j];
+     stn[2] = u[i - 1][j] * f1[i - 1][j];
+     stn[3] = u[i][j] * f1[i][j];
+     stn[4] = u[i + 1][j]*f1[i + 1][j];
+     fleft = cweno4( stn ); //flux
 
-	 source = -dfdx - dfdy; //minus is included in reconstruction step
+     stn[0] = f1[i - 3][j];
+     stn[1] = f1[i - 2][j];
+     stn[2] = f1[i - 1][j];
+     stn[3] = f1[i][j];
+     stn[4] = f1[i + 1][j];
+     uleft = cweno4( stn ); //flux
+
+     stn[0] = u[i + 2][j] * f1[i + 2][j];
+     stn[1] = u[i + 1][j] * f1[i + 1][j];
+     stn[2] = u[i][j] * f1[i][j];
+     stn[3] = u[i - 1][j]*f1[i - 1][j];
+     stn[4] = u[i - 2][j]*f1[i - 2][j];
+     fright = cweno4( stn );
+
+     stn[0] = f1[i + 2][j];
+     stn[1] = f1[i + 1][j];
+     stn[2] = f1[i][j];
+     stn[3] = f1[i - 1][j];
+     stn[4] = f1[i - 2][j];
+     uright = cweno4( stn );
+     
+     fl = 0.5*( fleft + fright ) - 0.5* max( abs( u[i][j] ), abs( u[i-1][j] ) ) * ( uright - uleft );
+
+     /* for flux at i+(1/2) */
+     stn[0] = u[i - 2][j] * f1[i - 2][j];
+     stn[1] = u[i - 1][j] * f1[i - 1][j];
+     stn[2] = u[i][j] *  f1[i][j];
+     stn[3] = u[i + 1][j] *  f1[i + 1][j];
+     stn[4] = u[i + 2][j] *  f1[i + 2][j];
+     fleft = cweno4( stn );
+
+     stn[0] = f1[i - 2][j];
+     stn[1] = f1[i - 1][j];
+     stn[2] = f1[i][j];
+     stn[3] = f1[i + 1][j];
+     stn[4] = f1[i + 2][j];
+     uleft = cweno4( stn );
+
+     stn[0] = u[i+3][j] * f1[i+3][j];
+     stn[1] = u[i+2][j] * f1[i+2][j];
+     stn[2] = u[i+1][j] * f1[i+1][j];
+     stn[3] = u[i][j] * f1[i][j];
+     stn[4] = u[i-1][j] * f1[i-1][j];
+     fright = cweno4( stn );
+
+     stn[0] = f1[i+3][j];
+     stn[1] = f1[i+2][j];
+     stn[2] = f1[i+1][j];
+     stn[3] = f1[i][j];
+     stn[4] = f1[i-1][j];
+     uright = cweno4( stn );
+
+     fr = 0.5*( fleft + fright ) - 0.5* max(abs( u[i][j] ), abs( u[i+1][j] )) *( uright - uleft );
+
+     dfdx = (fr - fl)/dx; 
+     /* --------------------------------------------------------------------- */
+
+      // y-axis for dfdy
+      /* for flux at j-(1/2) */
+     stn[0] = v[i][j - 3] * f1[i][j - 3];
+     stn[1] = v[i][j - 2] * f1[i][j - 2];
+     stn[2] = v[i][j - 1] * f1[i][j - 1];
+     stn[3] = v[i][j] * f1[i][j];
+     stn[4] = v[i][j+1] * f1[i][j + 1];
+     fleft = cweno4( stn );
+
+     stn[0] = f1[i][j - 3];
+     stn[1] = f1[i][j - 2];
+     stn[2] = f1[i][j - 1];
+     stn[3] = f1[i][j];
+     stn[4] = f1[i][j + 1];
+     uleft = cweno4( stn );
+
+     stn[0] = v[i][j + 2] * f1[i][j + 2];
+     stn[1] = v[i][j + 1] * f1[i][j + 1];
+     stn[2] = v[i][j] * f1[i][j];
+     stn[3] = v[i][j - 1] * f1[i][j - 1];
+     stn[4] = v[i][j - 2] * f1[i][j - 2];
+     fright = cweno4( stn );
+
+     stn[0] = f1[i][j + 2];
+     stn[1] = f1[i][j + 1];
+     stn[2] = f1[i][j];
+     stn[3] = f1[i][j - 1];
+     stn[4] = f1[i][j - 2];
+     uright = cweno4( stn );
+     
+     fl = 0.5*( fleft + fright ) - 0.5*max( abs( v[i][j] ), abs( v[i][j-1] ) )*( uright - uleft );
+
+     /* for flux at j+(1/2) */
+     stn[0] = v[i][j - 2] * f1[i][j - 2];
+     stn[1] = v[i][j - 1] * f1[i][j - 1];
+     stn[2] = v[i][j] * f1[i][j];
+     stn[3] = v[i][j + 1] * f1[i][j + 1];
+     stn[4] = v[i][j + 2] * f1[i][j + 2];
+     fleft = cweno4( stn );
+
+     stn[0] = f1[i][j - 2];
+     stn[1] = f1[i][j - 1];
+     stn[2] = f1[i][j];
+     stn[3] = f1[i][j + 1];
+     stn[4] = f1[i][j + 2];
+     uleft = cweno4( stn );
+
+     stn[0] = v[i][j + 3] * f1[i][j + 3];
+     stn[1] = v[i][j + 2] * f1[i][j + 2];
+     stn[2] = v[i][j + 1] * f1[i][j + 1];
+     stn[3] = v[i][j] * f1[i][j];
+     stn[4] = v[i][j - 1] * f1[i][j - 1];
+     fright = cweno4( stn );
+
+     stn[0] = f1[i][j + 3];
+     stn[1] = f1[i][j + 2];
+     stn[2] = f1[i][j + 1];
+     stn[3] = f1[i][j];
+     stn[4] = f1[i][j - 1];
+     uright = cweno4( stn );
+     
+     fr = 0.5*( fleft + fright ) - 0.5*max( abs( v[i][j] ), abs( v[i][j+1] ) )*( uright - uleft );
+
+     dfdy = (fr - fl)/dy; 
+     /* --------------------------------------------------------------------- */
+
+	/*Time integration*/
+	 source = - dfdx -  dfdy ; 
 	 fin = f[i][j];
-	 f2[i][j] = rkstep(fin, dt,1.0, source);
-	 
+	 ftemp = rkstep(fin, dt, 1.0, source);
+	 f2[i][j] = ftemp;
+	 	 
 	}
       } //end of i-j loop
-      
-    */
-
+    
+    
     /*Update*/
-    swap(f,f1);
+    swap(f,f2);
 
     if(iter%steps == 0){
     output2D(iter, imax, jmax, 
@@ -200,23 +412,6 @@ int main()
     iter +=1;
   }while(iter<itermax);
   
-  
-  /*file output*/
-  /*
-  ofstream fp;
-  fp.open("init-2D.csv", ios::out);
-  fp<<"x,y,z,u,v,f\n";
-  for(i=0; i<imax; ++i){
-    for(j=0; j<jmax; ++j){
-      fp<<xg[i][j]<<","
-	<<yg[i][j]<<","
-	<<0.0<<","
-	<<u[i][j]<<","
-	<<v[i][j]<<","
-	<<f[i][j]<<"\n";
-    }
-  }
-  fp.close();
-  */
+    
   
 }
