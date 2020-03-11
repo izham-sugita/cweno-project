@@ -140,24 +140,17 @@ int main()
      source = - dudx_iphalf ;
      // uin  = 0.5*(u[i] + u[i+1]) ; //uhalf -> quite diffusive, only 2nd-order approx.
      uin  = ucenter; // uhalf from cweno4 ->less diffusive
-     u1[i] = rkstep(uin, dt, 0.5, source); //update uhalf
+     u1[i] = rkstep(uin, dt, 0.25, source); //update uhalf
 
    }
 
    /*Update u[i] from u1[i], which is a uhalf*/
    for(int i=3; i<imax-3; ++i){
 
-     u2[i] = 0.5* (u1[i] + u1[i - 1]); //reconstruct from uhalf
+     // u2[i] = 0.5* (u1[i] + u1[i - 1]); //reconstruct from uhalf
 
-     /* reconstructing the value at i from [i+1/2, i-1/2] is too oscillatory*/
-     /*
-     stn[0] = u1[i - 3];
-     stn[1] = u1[i - 2];
-     stn[2] = u1[i-1];
-     stn[3] = u1[i]; 
-     stn[4] = u1[i + 1];
-     u2[i] = cweno4(stn);
-     */
+     u2[i+1] = 0.5* (u1[i] + u1[i + 1]); //reconstruct from uhalf
+
    }
    /*End first RK*/
    
@@ -191,7 +184,88 @@ int main()
      ucenter = cweno4(stn);
      
      source = - dudx_iphalf ;
-     //uin  = 0.5*(u[i] + u[i+1]) ; //uhalf
+     uin  = ucenter ; // uhalf from cweno
+     u1[i] = rkstep(uin, dt, 0.33333333, source); //update uhalf
+
+   }
+    
+   /*Update u[i] from u1[i], which is a uhalf*/
+   for(int i=3; i<imax-3; ++i){
+     //     u2[i] = 0.5* (u1[i] + u1[i - 1]); //reconstruct from uhalf
+     u2[i+1] = 0.5* (u1[i] + u1[i + 1]); //reconstruct from uhalf
+   }
+
+   
+   /*Third RK integration loop*/
+    for(int i=3; i<imax-3; ++i){
+
+       /* for derivative reconstruction at i */
+     stn[0] = (c*u2[i - 2] - c*u2[i-3]) / dx ;
+     stn[1] = (c*u2[i - 1] - c*u2[i - 2]) / dx ;
+     stn[2] = (c*u2[i] - c*u2[i-1]) / dx;
+     stn[3] = (c*u2[i + 1] - c*u2[i]) / dx;
+     stn[4] = (c*u2[i + 2] - c*u2[i + 1]) /dx;
+     dudx_i0 = cweno4( stn );
+
+      /* for derivative reconstruction at i+1 */
+     stn[0] = (c*u2[i - 1] - c*u2[i - 2]) / dx ;
+     stn[1] = (c*u2[i] - c*u2[i - 1]) / dx ;
+     stn[2] = (c*u2[i+1] - c*u2[i]) / dx;
+     stn[3] = (c*u2[i + 2] - c*u2[i + 1]) / dx;
+     stn[4] = (c*u2[i + 3] - c*u2[i + 2]) /dx;
+     dudx_ip1 = cweno4( stn );
+
+     dudx_iphalf = 0.5*(dudx_i0 + dudx_ip1);     
+
+     stn[0] = u[i - 2];
+     stn[1] = u[i - 1];
+     stn[2] = u[i];
+     stn[3] = u[i + 1]; 
+     stn[4] = u[i + 2];
+     ucenter = cweno4(stn);
+     
+     source = - dudx_iphalf ;
+     uin  = ucenter ; // uhalf from cweno
+     u1[i] = rkstep(uin, dt, 0.5, source); //update uhalf
+
+   }
+    
+   /*Update u[i] from u1[i], which is a uhalf*/
+   for(int i=3; i<imax-3; ++i){
+     //     u2[i] = 0.5* (u1[i] + u1[i - 1]); //reconstruct from uhalf
+     u2[i+1] = 0.5* (u1[i] + u1[i + 1]); //reconstruct from uhalf
+   }
+
+   
+    /*4th RK integration loop*/
+    for(int i=3; i<imax-3; ++i){
+
+       /* for derivative reconstruction at i */
+     stn[0] = (c*u2[i - 2] - c*u2[i-3]) / dx ;
+     stn[1] = (c*u2[i - 1] - c*u2[i - 2]) / dx ;
+     stn[2] = (c*u2[i] - c*u2[i-1]) / dx;
+     stn[3] = (c*u2[i + 1] - c*u2[i]) / dx;
+     stn[4] = (c*u2[i + 2] - c*u2[i + 1]) /dx;
+     dudx_i0 = cweno4( stn );
+
+      /* for derivative reconstruction at i+1 */
+     stn[0] = (c*u2[i - 1] - c*u2[i - 2]) / dx ;
+     stn[1] = (c*u2[i] - c*u2[i - 1]) / dx ;
+     stn[2] = (c*u2[i+1] - c*u2[i]) / dx;
+     stn[3] = (c*u2[i + 2] - c*u2[i + 1]) / dx;
+     stn[4] = (c*u2[i + 3] - c*u2[i + 2]) /dx;
+     dudx_ip1 = cweno4( stn );
+
+     dudx_iphalf = 0.5*(dudx_i0 + dudx_ip1);     
+
+     stn[0] = u[i - 2];
+     stn[1] = u[i - 1];
+     stn[2] = u[i];
+     stn[3] = u[i + 1]; 
+     stn[4] = u[i + 2];
+     ucenter = cweno4(stn);
+     
+     source = - dudx_iphalf ;
      uin  = ucenter ; // uhalf from cweno
      u1[i] = rkstep(uin, dt, 1.0, source); //update uhalf
 
@@ -199,19 +273,10 @@ int main()
     
    /*Update u[i] from u1[i], which is a uhalf*/
    for(int i=3; i<imax-3; ++i){
-     u2[i] = 0.5* (u1[i] + u1[i - 1]); //reconstruct from uhalf
-
-     //reconstructing using cweno for i from [i-1/2, i+1/2] is too oscillatory
-     /*
-     stn[0] = u1[i - 3];
-     stn[1] = u1[i - 2];
-     stn[2] = u1[i-1];
-     stn[3] = u1[i]; 
-     stn[4] = u1[i + 1];
-     u2[i] = cweno4(stn);
-     */
-     
+     //     u2[i] = 0.5* (u1[i] + u1[i - 1]); //reconstruct from uhalf
+     u2[i+1] = 0.5* (u1[i] + u1[i + 1]); //reconstruct from uhalf
    }
+
    
    swap(u,u2);
      
